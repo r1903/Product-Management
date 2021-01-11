@@ -28,28 +28,26 @@ router.post('/signup',async (req,res) => {
             password
         });
 
-        bcrypt.hash(req.body.password,10,(err,hash)=>{
+        bcrypt.hash(req.body.password,10,async (err,hash)=>{
             if(err){
                 return res.status(500).json({message:err.message});
             }else{
         
                 newUser['password'] = hash;
+                console.log(newUser);
+                try{
+                    const createdUser = await newUser.save();
+                    const token = jwt.sign({email:createdUser.email,id:createdUser._id},process.env.TOKEN_KEY,{expiresIn:"1hr"})
+                     res.status(201).json({user:createdUser.name,
+                                           message:'Registered Successfully',
+                                           token
+                                          });
+                }catch(err){
+                    res.status(400).json({message:err.message})
+                }
 
             }
         }); 
-        
-        try{
-            const createdUser = await newUser.save();
-            const token = jwt.sign({email:createdUser.email,id:createdUser._id},process.env.TOKEN_KEY,{expiresIn:"1hr"})
-             res.status(201).json({user:createdUser.name,
-                                   message:'Registered Successfully',
-                                   token
-                                  });
-        }catch(err){
-            res.status(400).json({message:err.message})
-        }
-
-
     }catch(err){
         res.status(500).json({message:err.message});
     }  
